@@ -1,0 +1,6 @@
+{
+  "name": "Mitra AI - Personal Autonomous Assistant",
+  "description": "All-in-one personal AI assistant for schedule management, emails, reminders, WhatsApp messaging, Reel scrolling, smart notes, and automated app downloading & login.",
+  "requestFramePermissions": ["clipboard-read", "clipboard-write"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
