@@ -1,75 +1,71 @@
 
-name: Build Mitra OS Android APK
+name: Mitra OS Android APK Build
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
-  build:
+  android-build:
+    name: Build Mitra OS
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout project
+      - name: Checkout Source
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Install Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Setup Java
+      - name: Install Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 21
+          java-version: '17'
 
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
+      - name: Install Project Dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci --legacy-peer-deps
+          else
+            npm install --legacy-peer-deps
+          fi
 
-      - name: Install Capacitor
-        run: npm install @capacitor/core @capacitor/android @capacitor/cli --legacy-peer-deps
-
-      - name: Build web app
+      - name: Build React Application
         run: npm run build
 
-      - name: Configure Capacitor
+      - name: Check Android Project
         run: |
-          cat > capacitor.config.json <<'EOF'
-          {
-            "appId": "com.rajveerpratap66.mitraos",
-            "appName": "Mitra OS",
-            "webDir": "dist"
-          }
-          EOF
+          if [ ! -f android/gradlew ]; then
+            echo "Android Gradle project not found"
+            exit 1
+          fi
 
-      - name: Add Android platform
-        run: npx cap add android
+      - name: Sync Capacitor
+        run: npx cap sync android
 
-      - name: Sync Android
-        run:       - name: Fix Kotlin conflicts
-        run: |
-          echo "allprojects {" >> android/build.gradle
-          echo "    configurations.all {" >> android/build.gradle
-          echo "        resolutionStrategy.eachDependency { details ->" >> android/build.gradle
-          echo "            if (details.requested.group == 'org.jetbrains.kotlin') {" >> android/build.gradle
-          echo "                details.useVersion '1.8.22'" >> android/build.gradle
-          echo "            }" >> android/build.gradle
-          echo "        }" >> android/build.gradle
-          echo "    }" >> android/build.gradle
-          echo "}" >> android/build.gradle
-
-      - name: Build APK
+      - name: Build Android APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --no-daemon
 
-      - name: Upload APK
+      - name: Verify APK
+        run: |
+          test -f android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload Mitra OS APK
         uses: actions/upload-artifact@v4
         with:
           name: Mitra-OS-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
-
+          if-no-files-found: error
+          retention-days: 7
+￼Enter
