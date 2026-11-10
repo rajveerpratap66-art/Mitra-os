@@ -49,7 +49,17 @@ jobs:
         run: npx cap add android
 
       - name: Sync Android
-        run: npx cap sync android
+        run:       - name: Fix Kotlin conflicts
+        run: |
+          echo "allprojects {" >> android/build.gradle
+          echo "    configurations.all {" >> android/build.gradle
+          echo "        resolutionStrategy.eachDependency { details ->" >> android/build.gradle
+          echo "            if (details.requested.group == 'org.jetbrains.kotlin') {" >> android/build.gradle
+          echo "                details.useVersion '1.8.22'" >> android/build.gradle
+          echo "            }" >> android/build.gradle
+          echo "        }" >> android/build.gradle
+          echo "    }" >> android/build.gradle
+          echo "}" >> android/build.gradle
 
       - name: Build APK
         run: |
